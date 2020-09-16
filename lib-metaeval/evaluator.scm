@@ -323,6 +323,9 @@
 (define (root-env? env)
   (eq? env the-empty-environment))
 
+(define (extend-environment bindings base-env)
+  (cons (make-frame bindings) base-env))
+
 (define (enclosing-environment env) (cdr env))
 (define (first-frame env) (car env))
 
@@ -331,14 +334,12 @@
 (define (frame-bindings frame)
   (cdr frame))
 
-(define (extend-environment bindings base-env)
-  (cons (make-frame bindings) base-env))
-
 (define (add-binding-to-frame! var val frame)
-  (append frame (list (make-binding var val))))
+  (set-cdr! frame
+            (append (frame-bindings frame) (list (make-binding var val)))))
 
 (define (lookup-variable-value var env)
-  (let ((binding (find-frame-binding var env)))
+  (let ((binding (find-env-binding var env)))
     (if (null? binding)
         (error "Unbound variable -- LOOKUP" var)
         (binding-value binding))))
@@ -354,7 +355,8 @@
     (let ((binding (find-frame-binding var frame)))
       (if (null? binding)
           (add-binding-to-frame! var val frame)
-          (set-binding-value! binding val)))))
+          (set-binding-value! binding val))))
+  )
 
 
 (define (make-binding var val)
@@ -369,7 +371,7 @@
 (define (find-frame-binding var frame)
   (define (scan-bindings bindings)
     (cond ((null? bindings) '())
-          ((eq? var (binding-var binding)) binding)
+          ((eq? var (binding-var (first bindings))) (first bindings))
           (else (scan-bindings (rest-bindings bindings)))))
   (scan-bindings (frame-bindings frame)))
 
