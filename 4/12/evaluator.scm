@@ -2,7 +2,8 @@
 (load "lib-metaeval/evaluator.scm")
 
 (define (add-binding-to-frame! var val frame)
-  (append frame (list (make-binding var val))))
+  (set-cdr! frame
+            (append (frame-bindings frame) (list (make-binding var val)))))
 
 (define (lookup-variable-value var env)
   (let ((binding (find-env-binding var env)))

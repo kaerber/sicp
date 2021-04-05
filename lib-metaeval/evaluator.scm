@@ -132,6 +132,29 @@
       (make-lambda (cdadr exp)   ; formal parameters
                    (cddr exp)))) ; body
 
+; UNDEFINE
+(define (make-unbound! var env)
+  (let ((frame (first-frame env)))
+    (define (filter-bindings bindings)
+      (cond ((null? bindings) '())
+            ((eq? var (binding-var (first bindings))) (filter-bindings (rest-bindings bindings)))
+            (else (cons (first bindings) (filter-bindings (rest-bindings bindings))))))
+  
+    (if (null? (find-env-binding var env))
+        (error "Unbound variable -- MAKE-UNBOUND" var))
+        (set-cdr! frame
+                  (filter-bindings (frame-bindings frame)))))
+
+(define (eval-undefine exp env)
+  (make-unbound! (undefine-variable exp)  env)
+  'ok)
+
+(define (undefine? exp)
+  (tagged-list? exp 'undefine))
+(define (undefine-variable exp)
+  (cadr exp))
+
+
 ; LAMBDA
 (define (lambda? exp) (tagged-list? exp 'lambda))
 (define (lambda-parameters exp) (cadr exp))
@@ -321,7 +344,7 @@
 ; ENVIRONMENTS
 (define the-empty-environment '())
 (define (root-env? env)
-  (eq? env the-empty-environment))
+  (eq? (enclosing-environment env) the-empty-environment))
 
 (define (extend-environment bindings base-env)
   (cons (make-frame bindings) base-env))
@@ -355,8 +378,7 @@
     (let ((binding (find-frame-binding var frame)))
       (if (null? binding)
           (add-binding-to-frame! var val frame)
-          (set-binding-value! binding val))))
-  )
+          (set-binding-value! binding val)))))
 
 
 (define (make-binding var val)
@@ -400,6 +422,7 @@
 ((root 'add) quoted? text-of-quotation)
 ((root 'add) assignment? eval-assignment)
 ((root 'add) definition? eval-definition)
+((root 'add) undefine? (lambda (exp env) (make-unbound! (undefine-variable exp) env)))
 ((root 'add) lambda? (lambda (exp env) (make-procedure (lambda-parameters exp) (lambda-body exp) env)))
 ((root 'add) if? eval-if)
 ((root 'add) begin? (lambda (exp env) (eval-sequence (begin-actions exp) env)))
@@ -422,6 +445,7 @@
              (cons '= =)
              (cons '> >)
              (cons '< <)
+             (cons 'display display)
              ))
 
 

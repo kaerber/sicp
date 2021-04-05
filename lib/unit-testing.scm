@@ -1,22 +1,28 @@
 ; unit-testing
 (load "lib/io.scm")
 
+; TODO rework assertions to use errors, rework test/test fixture to handle them
+
 (define (assert message condition)
-  (if condition
-      (begin
-        (display "Ok.") (newline))
-      (begin
-        (display "FAILURE: ") (display message) (newline))))
+  (if (not condition)
+      (eror "assert" "FAILURE: " message)))
 
 (define (assert-equals expected actual)
-  (if (eq? expected actual)
-      (begin
-        (display "Ok.") (newline)
-        true)
-      (begin
-        (println "FAILURE: Expected " expected ", but got " actual " .")
-        false)))
+  (if (not (equal? expected actual))
+      (error "assert-equals" "FAILURE: Expected " expected ", but got " actual " .")))
 
+(define (assert-error message params lambda)
+  ;(lambda)
+  (let ((condition (ignore-errors lambda)))
+    (if (condition? condition)
+        (let ((cond-message (access-condition condition 'message))
+              (cond-irritants (access-condition condition 'irritants)))
+          (if (not (and (equal? message cond-message)
+                        (equal? params cond-irritants)))
+              (error "assert-error" "Expected error with message \"" message "\" and irritants " params 
+                     ", but got \"" cond-message "\" and " cond-irritants ".")))
+        (error "assert-error" "Expected error with message \"" message "\" and irritants " params ", but got " condition "."))))
+    
 (define (test-fixture name . tests)
   (define (iter tests)
     (cond ((null? tests) true)
@@ -29,8 +35,17 @@
     'Ok.
     'FAILURE.))
 
-(define (test message execute)
+(define (test message test-body)
   (lambda ()
+    ;(test-body)
     (println "  " message)
-    (display "  ")
-    (execute)))
+    (let ((result (ignore-errors test-body)))
+      (if (condition? result)
+          (begin 
+            ;(println (condition-type/field-names (condition/type result)))
+            (print "  FAILURE: " (access-condition result 'message) ": ")
+            (apply println (access-condition result 'irritants))
+            false)
+          (begin
+            (println "  Ok.")
+            true)))))
