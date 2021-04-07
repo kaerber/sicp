@@ -4,9 +4,9 @@
 
 ; EVAL
 (define (eval exp env)
-  ((root 'eval) exp env))
+  ((evaluator 'eval) exp env))
 
-(define (make-root-env)
+(define (make-evaluator)
   (let ((handlers (list)))
     (define (first-handler handlers) (car handlers))
     (define (rest-handlers handlers) (cdr handlers))
@@ -418,19 +418,19 @@
     (define-variable! 'false false initial-env)
     initial-env))
 
-(define root (make-root-env))
-((root 'add) quoted? text-of-quotation)
-((root 'add) assignment? eval-assignment)
-((root 'add) definition? eval-definition)
-((root 'add) undefine? (lambda (exp env) (make-unbound! (undefine-variable exp) env)))
-((root 'add) lambda? (lambda (exp env) (make-procedure (lambda-parameters exp) (lambda-body exp) env)))
-((root 'add) if? eval-if)
-((root 'add) begin? (lambda (exp env) (eval-sequence (begin-actions exp) env)))
-((root 'add) cond? (lambda (exp env) (eval (cond->if exp) env)))
-((root 'add) and? eval-and)
-((root 'add) or? eval-or)
-((root 'add) let? (lambda (exp env) (eval (let->combination exp) env)))
-((root 'add) let*? (lambda (exp env) (eval (let*->nested-lets exp) env)))
+(define evaluator (make-evaluator))
+((evaluator 'add) quoted? text-of-quotation)
+((evaluator 'add) assignment? eval-assignment)
+((evaluator 'add) definition? eval-definition)
+((evaluator 'add) undefine? (lambda (exp env) (make-unbound! (undefine-variable exp) env)))
+((evaluator 'add) lambda? (lambda (exp env) (make-procedure (lambda-parameters exp) (lambda-body exp) env)))
+((evaluator 'add) if? eval-if)
+((evaluator 'add) begin? (lambda (exp env) (eval-sequence (begin-actions exp) env)))
+((evaluator 'add) cond? (lambda (exp env) (eval (cond->if exp) env)))
+((evaluator 'add) and? eval-and)
+((evaluator 'add) or? eval-or)
+((evaluator 'add) let? (lambda (exp env) (eval (let->combination exp) env)))
+((evaluator 'add) let*? (lambda (exp env) (eval (let*->nested-lets exp) env)))
 
 
 (define primitive-procedures
