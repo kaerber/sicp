@@ -1,7 +1,6 @@
 (load "lib/debugging.scm")
 (load "lib/unit-testing.scm")
 
-(load "lib-metaeval/evaluator.scm")
 
 (define (run program)
   (eval program the-global-environment))

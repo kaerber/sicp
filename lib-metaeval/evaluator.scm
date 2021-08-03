@@ -58,7 +58,7 @@
 
 ; APPLY
 (define (apply procedure arguments)
-  (cond ((primitive-procedure? procedure)
+   (cond ((primitive-procedure? procedure)
           (apply-primitive-procedure procedure arguments))
         ((compound-procedure? procedure)
           (eval-sequence
